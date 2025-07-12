@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
 
         body {
             font-family: 'TT Norms', sans-serif;
@@ -45,12 +46,10 @@
     </style>
 </head>
 
-<body class="relative bg-white">
+<body class="relative">
 
-    <!-- Header -->
     <header class="flex items-center justify-between bg-pink-200 px-6 py-4 shadow-md sticky top-0 z-10">
         <button aria-label="Cart" class="text-pink-700 text-3xl">
-            <!-- Shopping cart icon -->
             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-8 h-8" viewBox="0 0 24 24">
                 <path
                     d="M7 18c-1.104 0-2 .896-2 2s.896 2 2 2 2-.896 2-2-.896-2-2-2zm10 0c-1.104 0-2 .896-2 2s.896 2 2 2 2-.896 2-2-.896-2-2-2zm-12.83-2.25l1.72-7.5h12.22l1.5 6.5h-14.5z" />
@@ -58,7 +57,6 @@
         </button>
         <h1 class="font-playfair text-pink-800 text-3xl font-bold tracking-wide">PITIPAW</h1>
         <button aria-label="User" class="text-pink-700 text-3xl">
-            <!-- User icon -->
             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-8 h-8" viewBox="0 0 24 24">
                 <path
                     d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
@@ -66,12 +64,9 @@
         </button>
     </header>
 
-    <!-- Main content container -->
     <main class="max-w-7xl mx-auto px-6 py-10">
 
-        <!-- Hero Section -->
         <section class="flex flex-col md:flex-row items-center gap-10 mb-16">
-            <!-- Left text block -->
             <div class="md:w-1/2 text-pink-900">
                 <h2 class="font-playfair text-6xl font-bold leading-tight mb-6 tracking-widest">PITIPAW<br />CRAFT</h2>
                 <p class="text-lg leading-relaxed mb-8 max-w-md">
@@ -85,94 +80,80 @@
                 </button>
             </div>
 
-            <!-- Right image block with pink checkered background -->
             <div class="md:w-1/2 relative rounded-3xl overflow-hidden bg-pink-100" style="aspect-ratio: 4 / 3;">
-                <div class="absolute inset-0 bg-pink-200 grid grid-cols-8 grid-rows-8 gap-0.5 rounded-3xl">
-                    <!-- Checkerboard pattern -->
-                    <template id="checkerboard">
-                        <div class="bg-pink-300"></div>
-                        <div class="bg-pink-100"></div>
-                    </template>
-                    <!-- We'll create the checkerboard with JS -->
+                <div id="checkerboard-container"
+                    class="absolute inset-0 grid grid-cols-8 grid-rows-8 gap-0.5 rounded-3xl">
                 </div>
                 <img src="img/Pitipaw.png" alt="Pitipaw Craft"
                     class="relative object-cover w-full h-full rounded-3xl" />
             </div>
         </section>
 
-        <!-- Product Grid -->
         <section>
-            <div class="grid grid-cols-5 gap-6 mb-10">
-                <!-- 10 product cards -->
-                <!-- Each card pink background with image and text below -->
-                <!-- Using the same image for all as in screenshot -->
-                <template id="product-card">
-                    <div class="bg-pink-200 p-4 flex flex-col items-center rounded-md">
-                        <img src="img/calmy.png" alt="Calmy"
-                            class="mb-3 w-32 h-40 object-cover border-4 border-black" />
-                        <h3 class="font-bold text-pink-800 text-lg uppercase">Calmy</h3>
-                        <p class="text-pink-700">IDR 15.000</p>
-                    </div>
-                </template>
-            </div>
-
-            <!-- Last row with 2 cards: product + add new product -->
-            <div class="grid grid-cols-2 gap-6 max-w-xs">
-                <div class="bg-pink-200 p-4 flex flex-col items-center rounded-md">
-                    <img src="img/calmy.png" alt="Calmy" class="mb-3 w-32 h-40 object-cover border-4 border-black" />
-                    <h3 class="font-bold text-pink-800 text-lg uppercase">Calmy</h3>
-                    <p class="text-pink-700">IDR 15.000</p>
-                </div>
-                <div
-                    class="bg-pink-200 p-4 flex flex-col items-center justify-center rounded-md cursor-pointer select-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3"
-                        stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 text-black mb-2"
-                        viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="16" />
-                        <line x1="8" y1="12" x2="16" y2="12" />
-                    </svg>
-                    <span class="text-pink-800">add new product</span>
-                </div>
+            <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-10">
             </div>
         </section>
     </main>
 
-    <!-- Paw print decorations on right side -->
     <img src="img/pawprint.png" alt="paw print" class="paw-print paw1" />
     <img src="img/pawprint.png" alt="paw print" class="paw-print paw2" />
     <img src="img/pawprint.png" alt="paw print" class="paw-print paw3" />
     <img src="img/pawprint.png" alt="paw print" class="paw-print paw4" />
 
     <script>
-        // Create checkerboard pattern in hero right background
-        const container = document.querySelector('section > div.relative > div.absolute');
-        if (container) {
+        // --- SCRIPT UNTUK HERO SECTION ---
+        // Membuat pola papan catur di background gambar hero
+        const checkerboardContainer = document.getElementById('checkerboard-container');
+        if (checkerboardContainer) {
             const rows = 8;
             const cols = 8;
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     const div = document.createElement('div');
-                    // Alternate colors for checkerboard
-                    if ((r + c) % 2 === 0) {
-                        div.className = 'bg-pink-300';
-                    } else {
-                        div.className = 'bg-pink-100';
-                    }
-                    container.appendChild(div);
+                    div.className = (r + c) % 2 === 0 ? 'bg-pink-300' : 'bg-pink-100';
+                    checkerboardContainer.appendChild(div);
                 }
             }
         }
 
-        // Populate product grid with 10 cards
-        const productGrid = document.querySelector('section > div.grid.grid-cols-5');
-        const productTemplate = document.getElementById('product-card');
-        if (productGrid && productTemplate) {
-            for (let i = 0; i < 10; i++) {
-                const clone = productTemplate.content.cloneNode(true);
-                productGrid.appendChild(clone);
-            }
-        }
+        // --- SCRIPT UNTUK PRODUCT GRID ---
+        const productsData = [
+            { name: 'LOVELY', price: 'IDR 15.000', imageUrl: 'img/calmy.png' },
+            { name: 'SWEETY', price: 'IDR 18.000', imageUrl: 'https://placehold.co/400x500/fecdd3/4c0519?text=Sweety' },
+            { name: 'DREAMY', price: 'IDR 12.000', imageUrl: 'https://placehold.co/400x500/fbcfe8/4c0519?text=Dreamy' },
+            { name: 'SPARKY', price: 'IDR 20.000', imageUrl: 'https://placehold.co/400x500/f9a8d4/4c0519?text=Sparky' },
+            { name: 'CUDDLY', price: 'IDR 15.000', imageUrl: 'https://placehold.co/400x500/f5d0fe/4c0519?text=Cuddly' },
+            { name: 'SUNNY', price: 'IDR 17.000', imageUrl: 'https://placehold.co/400x500/e9d5ff/4c0519?text=Sunny' },
+        ];
+
+        const productGrid = document.getElementById('product-grid');
+
+        // Loop melalui data produk dan buat kartunya
+        productsData.forEach(product => {
+            const card = document.createElement('div');
+            card.className = 'bg-pink-200 p-4 flex flex-col items-center rounded-md';
+            card.innerHTML = `
+                <img src="${product.imageUrl}" alt="${product.name}" class="mb-3 w-full h-48 object-cover border-4 border-black" />
+                <h3 class="font-bold text-pink-800 text-lg uppercase">${product.name}</h3>
+                <p class="text-pink-700">${product.price}</p>
+            `;
+            productGrid.appendChild(card);
+        });
+
+        // Tambahkan kartu "Add New Product" di akhir
+        const addCard = document.createElement('div');
+        addCard.className = 'bg-pink-200 p-4 flex flex-col items-center justify-center rounded-md cursor-pointer select-none';
+        addCard.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 text-black mb-2"
+                viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="16" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            <span class="text-pink-800">add new product</span>
+        `;
+        productGrid.appendChild(addCard);
     </script>
 </body>
 
