@@ -1,0 +1,38 @@
+body {
+    font-family: 'TT Norms', sans-serif;
+    background: url('pink-checkered-bg.png');
+    /* ganti sesuai background kamu */
+    background-size: cover;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+.pitipaw-header {
+    text-align: center;
+    padding: 60px 20px;
+    background-color: rgba(255, 255, 255, 0.85);
+}
+
+.title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: #BF4FA9;
+}
+
+.subtitle, .cta {
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+.shop-btn {
+    display: inline-block;
+    margin-top: 30px;
+    padding: 12px 24px;
+    background-color: #BF4FA9;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+}
