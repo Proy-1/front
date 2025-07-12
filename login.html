@@ -12,23 +12,37 @@
         body {
             font-family: 'Cormorant Garamond', serif;
             background-color: #FFF9F9;
-            /* Latar belakang pink pucat */
         }
         .form-input {
             color: #4A4A4A;
         }
-
         .form-input:focus {
             border-color: #9D174D;
-            /* Warna pink-800 saat di-klik */
             box-shadow: 0 0 0 1px #9D174D;
         }
+
+        /* --- CSS UNTUK ANIMASI --- */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.7s ease-out forwards;
+        }
+        /* ------------------------- */
+
     </style>
 </head>
 
 <body class="min-h-screen flex items-center justify-center px-4">
 
-    <div class="w-full max-w-md">
+    <div id="login-container" class="w-full max-w-md opacity-0">
         <div class="bg-white py-8 px-6 shadow-lg rounded-lg">
 
             <header class="text-center mb-8">
@@ -40,21 +54,19 @@
                 <div class="mb-4">
                     <label for="email" class="block text-sm font-bold text-gray-700">Alamat Email</label>
                     <input type="email" name="email" id="email" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none form-input sm:text-sm">
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none form-input sm:text-sm">
                 </div>
-
                 <div class="mb-6">
                     <div class="flex justify-between items-baseline">
                         <label for="password" class="block text-sm font-bold text-gray-700">Password</label>
                         <a href="#" class="text-sm text-pink-700 hover:text-pink-800">Lupa password?</a>
                     </div>
                     <input type="password" name="password" id="password" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none form-input sm:text-sm">
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none form-input sm:text-sm">
                 </div>
-
                 <div>
                     <button type="submit"
-                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-pink-800 hover:bg-pink-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-colors">
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-pink-800 hover:bg-pink-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-colors">
                         LOGIN
                     </button>
                 </div>
@@ -69,6 +81,17 @@
         </div>
     </div>
 
+    <script>
+        
+        // --- SCRIPT UNTUK ANIMASI FADE IN ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginContainer = document.getElementById('login-container');
+            loginContainer.classList.remove('opacity-0');
+            loginContainer.classList.add('animate-fade-in-up');
+        });
+        // --- SCRIPT UNTUK ANIMASI FADE IN ---
+        
+    </script>
+    
 </body>
-
 </html>
