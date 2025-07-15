@@ -8,13 +8,19 @@ class ApiService {
     // Cek koneksi backend
     async checkBackendHealth() {
         try {
+            console.log('🔍 Checking backend health at:', getApiUrl('health'));
             const response = await fetch(getApiUrl('health'), {
                 method: 'GET',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 timeout: API_CONFIG.timeout
             });
+            console.log('🔍 Health check response:', response.status, response.ok);
             return response.ok;
         } catch (error) {
-            console.warn('Backend tidak tersedia, menggunakan mode fallback');
+            console.warn('⚠️ Backend tidak tersedia, menggunakan mode fallback. Error:', error.message);
             return false;
         }
     }
@@ -23,20 +29,67 @@ class ApiService {
     async getProducts() {
         try {
             const isBackendAvailable = await this.checkBackendHealth();
+            console.log('🔍 Backend health check result:', isBackendAvailable);
             
             if (isBackendAvailable) {
+                console.log('🌐 Fetching products from backend:', getApiUrl('products'));
                 const response = await fetch(getApiUrl('products'));
+                
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                
                 const data = await response.json();
-                return data.products || data;
+                console.log('📦 Raw response from backend:', data);
+                
+                let products = data.products || data;
+                console.log('📋 Products array:', products);
+                
+                // Debug: Show structure of first product only if needed
+                if (products && products.length > 0) {
+                    console.log('🔍 Loaded products from backend:', products.length);
+                    console.log('🔍 First product example:', products[0]);
+                }
+                
+                // Smart image URL detection for backend products
+                for (const product of products) {
+                    // Try different possible field names for image
+                    const originalImageUrl = product.imageUrl || 
+                                           product.image_url ||  // Backend menggunakan snake_case!
+                                           product.image || 
+                                           product.imagePath || 
+                                           product.img || 
+                                           product.photo || 
+                                           product.picture ||
+                                           product.fileName ||
+                                           product.file ||
+                                           product.attachment ||
+                                           product.media;
+                                           
+                    console.log(`🖼️ Processing product ${product.name}:`);
+                    console.log('  - Selected field image_url:', product.image_url);
+                    console.log('  - Final imageUrl:', originalImageUrl);
+                    
+                    if (originalImageUrl && originalImageUrl !== 'undefined') {
+                        // Try to find working image URL
+                        product.imageUrl = await this.findWorkingImageUrl(originalImageUrl);
+                        console.log('  - Final imageUrl:', product.imageUrl);
+                    } else {
+                        console.log('  - No image URL found, using fallback');
+                        product.imageUrl = 'img/Pitipaw.png';
+                    }
+                }
+                
+                console.log('✅ Final products with normalized URLs:', products);
+                return products;
             } else {
+                console.log('🟡 Backend not available, using fallback products');
                 // Fallback ke data static
                 return this.getFallbackProducts();
             }
         } catch (error) {
-            console.error('Error fetching products:', error);
+            console.error('❌ Error fetching products:', error);
+            console.log('🟡 Falling back to static products');
             return this.getFallbackProducts();
         }
     }
@@ -111,7 +164,13 @@ class ApiService {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                return await response.json();
+                const product = await response.json();
+                
+                // Normalize image URL
+                return {
+                    ...product,
+                    imageUrl: this.normalizeImageUrl(product.imageUrl || product.image)
+                };
             } else {
                 // Fallback: cari dari data static
                 const products = this.getFallbackProducts();
@@ -215,6 +274,194 @@ class ApiService {
             minimumFractionDigits: 0
         }).format(price);
     }
+
+    // Normalize image URL untuk menangani berbagai format path
+    normalizeImageUrl(imageUrl) {
+        if (!imageUrl) {
+            return 'img/Pitipaw.png'; // Default fallback image
+        }
+
+        console.log('Normalizing image URL:', imageUrl); // Debug log
+
+        // Jika sudah full URL (http/https), return as-is
+        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+            console.log('Full URL detected:', imageUrl);
+            return imageUrl;
+        }
+
+        // Jika path relatif lokal (img/), return as-is
+        if (imageUrl.startsWith('img/')) {
+            console.log('Local image path detected:', imageUrl);
+            return imageUrl;
+        }
+
+        // Jika path backend uploads
+        if (imageUrl.startsWith('uploads/')) {
+            const staticUrl = getStaticUrl(imageUrl);
+            console.log('Backend uploads path detected:', imageUrl, '-> Static URL:', staticUrl);
+            return staticUrl;
+        }
+
+        // Jika path dimulai dengan static/
+        if (imageUrl.startsWith('static/')) {
+            const staticUrl = `${API_CONFIG.baseURL}/${imageUrl}`;
+            console.log('Static path detected:', imageUrl, '-> Full URL:', staticUrl);
+            return staticUrl;
+        }
+
+        // Jika hanya filename, anggap dari uploads
+        if (!imageUrl.includes('/')) {
+            const staticUrl = getStaticUrl(`uploads/${imageUrl}`);
+            console.log('Filename only detected:', imageUrl, '-> Static URL:', staticUrl);
+            return staticUrl;
+        }
+
+        // Default: gunakan getStaticUrl helper
+        const staticUrl = getStaticUrl(imageUrl);
+        console.log('Default case:', imageUrl, '-> Static URL:', staticUrl);
+        return staticUrl;
+    }
+
+    // Check if image URL is accessible
+    async checkImageUrl(imageUrl) {
+        try {
+            const response = await fetch(imageUrl, { method: 'HEAD' });
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // Pre-load image untuk memastikan dapat diakses
+    async preloadImage(imageUrl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                console.log('Successfully preloaded image:', imageUrl);
+                resolve(true);
+            };
+            img.onerror = () => {
+                console.warn('Failed to preload image:', imageUrl);
+                resolve(false);
+            };
+            img.src = imageUrl;
+        });
+    }
+
+    // Validate and fix image URLs for products
+    async validateProductImages(products) {
+        for (const product of products) {
+            const originalUrl = product.imageUrl;
+            const normalizedUrl = this.normalizeImageUrl(originalUrl);
+            
+            console.log(`Validating image for ${product.name}:`, originalUrl, '->', normalizedUrl);
+            
+            // Test if normalized URL works
+            const isValid = await this.preloadImage(normalizedUrl);
+            
+            if (!isValid && !normalizedUrl.startsWith('img/')) {
+                console.warn(`Image failed for ${product.name}, falling back to local image`);
+                product.imageUrl = 'img/Pitipaw.png';
+            } else {
+                product.imageUrl = normalizedUrl;
+            }
+        }
+        
+        return products;
+    }
+
+    // Test multiple possible image URL formats
+    testImageUrls(originalUrl) {
+        const possibleUrls = [];
+        
+        if (!originalUrl || originalUrl === 'undefined') {
+            // If no URL provided, try common filenames from dashboard
+            const commonFilenames = [
+                'product1.jpg', 'product2.jpg', 'product.jpg', 'image.jpg',
+                'product1.png', 'product2.png', 'product.png', 'image.png'
+            ];
+            
+            commonFilenames.forEach(filename => {
+                possibleUrls.push({
+                    type: 'common_filename',
+                    url: `${API_CONFIG.baseURL}/static/uploads/${filename}`
+                });
+            });
+            
+            return possibleUrls;
+        }
+        
+        // 1. Original URL as-is (if it's already a full URL)
+        if (originalUrl.startsWith('http')) {
+            possibleUrls.push({
+                type: 'original_full',
+                url: originalUrl
+            });
+        }
+        
+        // 2. Normalized via our function
+        possibleUrls.push({
+            type: 'normalized',
+            url: this.normalizeImageUrl(originalUrl)
+        });
+        
+        // 3. Direct static path variations
+        const filename = originalUrl.split('/').pop();
+        possibleUrls.push({
+            type: 'static_uploads',
+            url: `${API_CONFIG.baseURL}/static/uploads/${filename}`
+        });
+        
+        possibleUrls.push({
+            type: 'uploads_only',
+            url: `${API_CONFIG.baseURL}/uploads/${filename}`
+        });
+        
+        // 4. If it's already a path, try different combinations
+        if (originalUrl.includes('/')) {
+            possibleUrls.push({
+                type: 'direct_static',
+                url: `${API_CONFIG.baseURL}/static/${originalUrl}`
+            });
+            
+            possibleUrls.push({
+                type: 'direct_base',
+                url: `${API_CONFIG.baseURL}/${originalUrl}`
+            });
+        }
+        
+        // 5. Try without any path prefix
+        possibleUrls.push({
+            type: 'filename_only',
+            url: `${API_CONFIG.baseURL}/static/uploads/${originalUrl}`
+        });
+        
+        return possibleUrls;
+    }
+
+    // Test which image URL works
+    async findWorkingImageUrl(originalUrl) {
+        const possibleUrls = this.testImageUrls(originalUrl);
+        
+        console.log(`🔍 Testing ${possibleUrls.length} possible URLs for: ${originalUrl}`);
+        
+        for (const urlTest of possibleUrls) {
+            try {
+                const testSuccess = await this.preloadImage(urlTest.url);
+                if (testSuccess) {
+                    console.log(`✅ Working URL found (${urlTest.type}):`, urlTest.url);
+                    return urlTest.url;
+                }
+                console.log(`❌ Failed URL (${urlTest.type}):`, urlTest.url);
+            } catch (error) {
+                console.log(`❌ Error testing URL (${urlTest.type}):`, urlTest.url, error.message);
+            }
+        }
+        
+        console.log(`⚠️ No working URL found for: ${originalUrl}, using fallback`);
+        return 'img/Pitipaw.png';
+    }
+
 }
 
 // Instance global API service

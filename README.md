@@ -1,118 +1,97 @@
 # PITIPAW Frontend
 
-Frontend untuk toko online PITIPAW Craft yang terintegrasi dengan backend API dan dashboard admin.
+Frontend untuk toko online PITIPAW Craft yang dapat berjalan standalone atau terintegrasi dengan backend API.
 
 ## 🚀 Fitur
 
-- **Tampilan Produk Dinamis**: Mengambil data produk dari backend API
-- **Mode Fallback**: Tetap berfungsi meskipun backend offline dengan data static
+- **Tampilan Produk Dinamis**: Mengambil data produk dari backend API (jika tersedia)
+- **Mode Fallback**: Tetap berfungsi dengan data static jika backend offline
 - **Detail Produk**: Halaman detail lengkap untuk setiap produk
-- **Keranjang Belanja**: Fungsionalitas add to cart (localStorage)
 - **WhatsApp Integration**: Langsung chat untuk pembelian
 - **Responsive Design**: Tampil baik di desktop dan mobile
-- **Real-time Status**: Menampilkan status koneksi backend
+- **Standalone**: Bisa berjalan tanpa dependency repo lain
 
-## 🔗 Integrasi
+## 📋 Quick Start
 
-### Backend Repository
-- **URL**: https://github.com/Proy-1/back
-- **API Base URL**: `http://localhost:5000`
-- **Endpoints**:
-  - `GET /api/products` - Ambil semua produk
-  - `GET /api/products/{id}` - Ambil detail produk
-  - `GET /api/health` - Health check
-  - Dan lainnya...
+### Menjalankan Frontend
 
-### Dashboard Admin
-- **URL**: https://github.com/Proy-1/dashboard-1
-- **Fungsi**: Mengelola produk (CRUD operations)
-- **Access**: Melalui tombol "Dashboard Admin" di halaman produk
+```powershell
+# Metode 1: PowerShell (Recommended)
+.\start-frontend.ps1
 
-## 📋 Setup Instructions
+# Metode 2: Command Prompt
+.\start-frontend.bat
 
-### 1. Setup Backend (Recommended)
-
-Untuk mendapatkan fitur lengkap, setup backend terlebih dahulu:
-
-```bash
-# Clone backend repository
-git clone https://github.com/Proy-1/back.git
-cd back/backend
-
-# Install dependencies
-pip install flask flask-cors pymongo python-dotenv werkzeug
-
-# Create .env file
-echo "MONGO_URI=mongodb://localhost:27017/pitipaw" > .env
-
-# Run backend
-python app.py
+# Metode 3: Manual
+python -m http.server 3000
 ```
 
-Backend akan berjalan di: `http://localhost:5000`
+Frontend akan tersedia di: **http://localhost:3000**
 
-### 2. Setup Dashboard (Optional)
+### Integrasi Backend (Opsional)
 
-```bash
-# Clone dashboard repository
-git clone https://github.com/Proy-1/dashboard-1.git
-cd dashboard-1
+Jika Anda memiliki backend API yang kompatibel:
 
-# Run dashboard
-.\start-dashboard.ps1
-# atau
-.\start-dashboard.bat
-```
+1. Pastikan backend berjalan di `http://localhost:5000`
+2. API endpoints yang dibutuhkan:
+   - `GET /api/health` - Health check
+   - `GET /api/products` - Daftar produk
+   - `GET /api/products/{id}` - Detail produk
 
-### 3. Run Frontend
+Frontend akan otomatis mendeteksi dan menggunakan backend jika tersedia.
 
-```bash
-# Di folder frontend
-python -m http.server 8000
-# atau buka index.html langsung di browser
-```
+## 🎨 Halaman yang Tersedia
 
-Akses di: `http://localhost:8000`
+- **`index.html`** - Landing page
+- **`user.html`** - Halaman utama produk
+- **`product-detail.html`** - Detail produk
+- **`login.html`** - Halaman login
+- **`register.html`** - Halaman register
 
 ## 🔧 Konfigurasi
 
-### API Configuration
-
-Edit `js/config.js` untuk mengubah konfigurasi:
+Edit `js/config.js` untuk menyesuaikan:
 
 ```javascript
 const API_CONFIG = {
-    baseURL: 'http://localhost:5000', // Ubah jika backend di URL lain
-    endpoints: {
-        products: '/api/products',
-        health: '/api/health',
-        // ...
-    },
-    fallbackMode: true, // Mode fallback jika backend offline
-    timeout: 5000
+    baseURL: 'http://localhost:5000',  // URL backend API
+    frontendPort: 3000,               // Port frontend
+    fallbackMode: true,               // Mode fallback
+    timeout: 5000                     // Timeout API calls
 };
 ```
 
-### Mode Operasi
+## 📦 File Structure
 
-#### 1. Dengan Backend (Production Mode)
-- ✅ Data produk real-time dari database
-- ✅ CRUD operations via dashboard
-- ✅ Status koneksi real-time
-- ✅ Semua fitur aktif
+```
+frontend/
+├── index.html              # Landing page
+├── user.html               # Main shop page
+├── product-detail.html     # Product detail page
+├── login.html              # Login page
+├── register.html           # Register page
+├── style.css               # Main styles
+├── js/
+│   ├── config.js          # Configuration
+│   └── api-service.js     # API service layer
+├── img/                   # Product images
+├── start-frontend.ps1     # Start script (PowerShell)
+├── start-frontend.bat     # Start script (Batch)
+└── README.md              # This file
+```
 
-#### 2. Tanpa Backend (Demo Mode)
-- ⚠️ Data produk static/fallback
-- ⚠️ Operasi CRUD tidak tersimpan
-- ⚠️ Mode offline indicator
-- ✅ UI tetap berfungsi normal
+## 📱 Screenshots & Demo
+
+Akses **http://localhost:3000** untuk melihat demo live.
 
 ## 📞 Support
 
 - **WhatsApp**: +6283137760847
 - **Instagram**: @pitipaw_craft
-- **Backend Issues**: https://github.com/Proy-1/back/issues
-- **Dashboard Issues**: https://github.com/Proy-1/dashboard-1/issues
+
+## 📄 License
+
+MIT License
 
 ---
 

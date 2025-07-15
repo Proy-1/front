@@ -1,6 +1,7 @@
-# Script PowerShell untuk menjalankan frontend PITIPAW
+# PITIPAW Frontend Server
+# Script untuk menjalankan frontend di port 3000
 
-Write-Host "=== PITIPAW Frontend Launcher ===" -ForegroundColor Cyan
+Write-Host "=== PITIPAW Frontend ===" -ForegroundColor Cyan
 Write-Host ""
 
 # Check if Python is installed
@@ -13,23 +14,23 @@ try {
     exit 1
 }
 
-# Check backend status
+# Check backend status (optional)
 Write-Host "🔍 Checking backend connection..." -ForegroundColor Yellow
 try {
     $response = Invoke-WebRequest -Uri "http://localhost:5000/api/health" -Method Get -TimeoutSec 3 -ErrorAction Stop
     Write-Host "✅ Backend terhubung di http://localhost:5000" -ForegroundColor Green
-    $backendStatus = "CONNECTED"
+    $backendStatus = "ONLINE"
 } catch {
-    Write-Host "⚠️  Backend tidak terhubung - akan menggunakan mode fallback" -ForegroundColor Yellow
+    Write-Host "⚠️  Backend offline - menggunakan mode demo" -ForegroundColor Yellow
     $backendStatus = "OFFLINE"
 }
 
 Write-Host ""
-Write-Host "🚀 Starting frontend server..." -ForegroundColor Cyan
-Write-Host "📍 Frontend akan tersedia di: http://localhost:8000" -ForegroundColor Blue
+Write-Host "🚀 Starting PITIPAW Frontend..." -ForegroundColor Cyan
+Write-Host "📍 URL: http://localhost:3000" -ForegroundColor Blue
 Write-Host ""
 
-if ($backendStatus -eq "CONNECTED") {
+if ($backendStatus -eq "ONLINE") {
     Write-Host "🟢 Mode: Production (dengan backend)" -ForegroundColor Green
 } else {
     Write-Host "🟡 Mode: Demo (tanpa backend)" -ForegroundColor Yellow
@@ -37,15 +38,15 @@ if ($backendStatus -eq "CONNECTED") {
 
 Write-Host ""
 Write-Host "📋 Available pages:" -ForegroundColor Cyan
-Write-Host "   • Landing Page: http://localhost:8000" -ForegroundColor White
-Write-Host "   • Product Page: http://localhost:8000/user.html" -ForegroundColor White
-Write-Host "   • Login Page: http://localhost:8000/login.html" -ForegroundColor White
+Write-Host "   • Home: http://localhost:3000" -ForegroundColor White
+Write-Host "   • Shop: http://localhost:3000/user.html" -ForegroundColor White
+Write-Host "   • Login: http://localhost:3000/login.html" -ForegroundColor White
 Write-Host ""
 Write-Host "🛑 Tekan Ctrl+C untuk stop server" -ForegroundColor Red
 Write-Host ""
 
 # Auto-open browser
-Start-Process "http://localhost:8000"
+Start-Process "http://localhost:3000"
 
 # Start Python HTTP server
-python -m http.server 8000
+python -m http.server 3000

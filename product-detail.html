@@ -92,7 +92,8 @@
                         <div>
                             <img src="${product.imageUrl}" alt="${product.name}" 
                                  class="w-full h-96 object-cover rounded-2xl border-4 border-pink-300"
-                                 onerror="this.src='img/Pitipaw.png'" />
+                                 onerror="this.src='img/Pitipaw.png'; console.warn('Failed to load image:', '${product.imageUrl}'); this.onerror=null;" 
+                                 loading="lazy" />
                         </div>
                         
                         <div class="flex flex-col justify-center">

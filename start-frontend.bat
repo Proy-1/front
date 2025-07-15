@@ -1,7 +1,7 @@
 @echo off
-REM Script untuk menjalankan frontend PITIPAW di Windows
+REM PITIPAW Frontend Server
 
-echo === PITIPAW Frontend Launcher ===
+echo === PITIPAW Frontend ===
 echo.
 
 REM Check if Python is installed
@@ -15,23 +15,23 @@ if %errorlevel% neq 0 (
 echo ✅ Python ditemukan
 echo.
 
-REM Check backend status
+REM Check backend status (optional)
 echo 🔍 Checking backend connection...
 curl -s http://localhost:5000/api/health >nul 2>&1
 if %errorlevel% equ 0 (
     echo ✅ Backend terhubung di http://localhost:5000
-    set BACKEND_STATUS=CONNECTED
+    set BACKEND_STATUS=ONLINE
 ) else (
-    echo ⚠️  Backend tidak terhubung - akan menggunakan mode fallback
+    echo ⚠️  Backend offline - menggunakan mode demo
     set BACKEND_STATUS=OFFLINE
 )
 
 echo.
-echo 🚀 Starting frontend server...
-echo 📍 Frontend akan tersedia di: http://localhost:8000
+echo 🚀 Starting PITIPAW Frontend...
+echo 📍 URL: http://localhost:3000
 echo.
 
-if "%BACKEND_STATUS%"=="CONNECTED" (
+if "%BACKEND_STATUS%"=="ONLINE" (
     echo 🟢 Mode: Production (dengan backend)
 ) else (
     echo 🟡 Mode: Demo (tanpa backend)
@@ -39,12 +39,12 @@ if "%BACKEND_STATUS%"=="CONNECTED" (
 
 echo.
 echo 📋 Available pages:
-echo    • Landing Page: http://localhost:8000
-echo    • Product Page: http://localhost:8000/user.html
-echo    • Login Page: http://localhost:8000/login.html
+echo    • Home: http://localhost:3000
+echo    • Shop: http://localhost:3000/user.html
+echo    • Login: http://localhost:3000/login.html
 echo.
 echo 🛑 Tekan Ctrl+C untuk stop server
 echo.
 
 REM Start Python HTTP server
-python -m http.server 8000
+python -m http.server 3000
