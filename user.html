@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PITIPAW Craft - Tailwind</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- API Configuration -->
+    <script src="js/config.js"></script>
+    <script src="js/api-service.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
@@ -90,6 +93,19 @@
         </section>
 
         <section>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-pink-800">Produk Kami</h2>
+                <div class="flex items-center space-x-4">
+                    <div id="backend-status" class="text-sm"></div>
+                    <button id="refresh-products" class="bg-pink-400 text-white px-4 py-2 rounded-lg hover:bg-pink-500 transition-colors">
+                        Refresh Produk
+                    </button>
+                </div>
+            </div>
+            <div id="loading-indicator" class="text-center py-8 hidden">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
+                <p class="mt-2 text-pink-600">Memuat produk...</p>
+            </div>
             <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-10">
             </div>
         </section>
@@ -116,44 +132,153 @@
             }
         }
 
-        // --- SCRIPT UNTUK PRODUCT GRID ---
-        const productsData = [
-            { name: 'CALMY', price: 'IDR 15.000', imageUrl: 'img/calmy.png' },
-            { name: 'MARIPOSA', price: 'IDR 18.000', imageUrl: 'img/mrps.png' },
-            { name: 'SEA', price: 'IDR 12.000', imageUrl: 'img/sea.png' },
-            { name: 'CUTIE', price: 'IDR 20.000', imageUrl: 'img/ct.png' },
-            { name: 'CANDY', price: 'IDR 15.000', imageUrl: 'img/cnd.png' },
-            { name: 'BEE', price: 'IDR 17.000', imageUrl: 'img/bee.png' },
-        ];
+        // --- SCRIPT UNTUK PRODUCT GRID (DINAMIS) ---
+        let currentProducts = [];
 
-        const productGrid = document.getElementById('product-grid');
+        // Status backend
+        async function checkAndDisplayBackendStatus() {
+            const statusElement = document.getElementById('backend-status');
+            const isHealthy = await apiService.checkBackendHealth();
+            
+            if (isHealthy) {
+                statusElement.innerHTML = '<span class="text-green-600">🟢 Backend Terhubung</span>';
+            } else {
+                statusElement.innerHTML = '<span class="text-orange-600">🟡 Mode Offline</span>';
+            }
+        }
 
-        // Loop melalui data produk dan buat kartunya
-        productsData.forEach(product => {
-            const card = document.createElement('div');
-            card.className = 'bg-pink-200 p-4 flex flex-col items-center rounded-md';
-            card.innerHTML = `
-                <img src="${product.imageUrl}" alt="${product.name}" class="mb-3 w-full h-48 object-cover border-4 border-black" />
-                <h3 class="font-bold text-pink-800 text-lg uppercase">${product.name}</h3>
-                <p class="text-pink-700">${product.price}</p>
+        // Load products dari API
+        async function loadProducts() {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const productGrid = document.getElementById('product-grid');
+            
+            // Show loading
+            loadingIndicator.classList.remove('hidden');
+            productGrid.innerHTML = '';
+            
+            try {
+                // Fetch products dari API
+                currentProducts = await apiService.getProducts();
+                
+                // Hide loading
+                loadingIndicator.classList.add('hidden');
+                
+                // Render products
+                renderProducts(currentProducts);
+                
+            } catch (error) {
+                console.error('Error loading products:', error);
+                loadingIndicator.classList.add('hidden');
+                productGrid.innerHTML = '<div class="col-span-full text-center text-red-600">Error memuat produk</div>';
+            }
+        }
+
+        // Render products ke grid
+        function renderProducts(products) {
+            const productGrid = document.getElementById('product-grid');
+            productGrid.innerHTML = '';
+
+            // Loop melalui data produk dan buat kartunya
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'bg-pink-200 p-4 flex flex-col items-center rounded-md hover:shadow-lg transition-shadow cursor-pointer';
+                
+                // Format harga
+                const formattedPrice = apiService.formatPrice(product.price);
+                
+                card.innerHTML = `
+                    <img src="${product.imageUrl}" alt="${product.name}" 
+                         class="mb-3 w-full h-48 object-cover border-4 border-black rounded-md" 
+                         onerror="this.src='img/Pitipaw.png'" />
+                    <h3 class="font-bold text-pink-800 text-lg uppercase text-center">${product.name}</h3>
+                    <p class="text-pink-700 font-semibold">${formattedPrice}</p>
+                    ${product.stock ? `<p class="text-sm text-pink-600">Stok: ${product.stock}</p>` : ''}
+                    ${product.description ? `<p class="text-xs text-gray-600 mt-2 text-center line-clamp-2">${product.description}</p>` : ''}
+                `;
+                
+                // Add click handler untuk detail produk
+                card.addEventListener('click', () => showProductDetail(product));
+                
+                productGrid.appendChild(card);
+            });
+
+            // Tambahkan kartu "Lihat Dashboard Admin" di akhir
+            const adminCard = document.createElement('div');
+            adminCard.className = 'bg-gradient-to-br from-pink-300 to-pink-400 p-4 flex flex-col items-center justify-center rounded-md cursor-pointer select-none hover:shadow-lg transition-shadow';
+            adminCard.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3"
+                    stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 text-white mb-2"
+                    viewBox="0 0 24 24">
+                    <path d="M12 20V10"/>
+                    <path d="M18 20V4"/>
+                    <path d="M6 20v-6"/>
+                </svg>
+                <span class="text-white font-bold text-center">Dashboard Admin</span>
+                <span class="text-pink-100 text-sm">Kelola Produk</span>
             `;
-            productGrid.appendChild(card);
+            
+            // Link ke dashboard admin
+            adminCard.addEventListener('click', () => {
+                window.open('https://github.com/Proy-1/dashboard-1', '_blank');
+            });
+            
+            productGrid.appendChild(adminCard);
+        }
+
+        // Show product detail modal
+        function showProductDetail(product) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            
+            const formattedPrice = apiService.formatPrice(product.price);
+            
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg max-w-md w-full p-6 relative">
+                    <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl" onclick="this.closest('.fixed').remove()">
+                        ×
+                    </button>
+                    <img src="${product.imageUrl}" alt="${product.name}" 
+                         class="w-full h-64 object-cover rounded-lg mb-4"
+                         onerror="this.src='img/Pitipaw.png'" />
+                    <h3 class="text-2xl font-bold text-pink-800 mb-2">${product.name}</h3>
+                    <p class="text-xl text-pink-700 font-semibold mb-2">${formattedPrice}</p>
+                    ${product.stock ? `<p class="text-sm text-gray-600 mb-2">Stok tersedia: ${product.stock}</p>` : ''}
+                    ${product.category ? `<p class="text-sm text-gray-600 mb-2">Kategori: ${product.category}</p>` : ''}
+                    ${product.description ? `<p class="text-gray-700 mb-4">${product.description}</p>` : ''}
+                    <div class="flex space-x-2">
+                        <button class="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition-colors flex-1">
+                            Beli Sekarang
+                        </button>
+                        <button class="border border-pink-500 text-pink-500 px-4 py-2 rounded-lg hover:bg-pink-50 transition-colors">
+                            Tambah ke Keranjang
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
+            document.body.appendChild(modal);
+        }
+
+        // Event listeners
+        document.getElementById('refresh-products').addEventListener('click', loadProducts);
+
+        // Initialize ketika halaman dimuat
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAndDisplayBackendStatus();
+            await loadProducts();
         });
 
-        // Tambahkan kartu "Add New Product" di akhir
-        const addCard = document.createElement('div');
-        addCard.className = 'bg-pink-200 p-4 flex flex-col items-center justify-center rounded-md cursor-pointer select-none';
-        addCard.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3"
-                stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 text-black mb-2"
-                viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="16" />
-                <line x1="8" y1="12" x2="16" y2="12" />
-            </svg>
-            <span class="text-pink-800">add new product</span>
-        `;
-        productGrid.appendChild(addCard);
+        // Auto refresh setiap 5 menit
+        setInterval(async () => {
+            await checkAndDisplayBackendStatus();
+        }, 5 * 60 * 1000);
     </script>
 </body>
 
