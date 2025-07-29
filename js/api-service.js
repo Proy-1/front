@@ -20,7 +20,13 @@ class ApiService {
             console.log('🔍 Health check response:', response.status, response.ok);
             return response.ok;
         } catch (error) {
-            console.warn('⚠️ Backend tidak tersedia, menggunakan mode fallback. Error:', error.message);
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                console.warn('⚠️ CORS Error: Gunakan HTTP server untuk mengatasi masalah ini');
+                console.warn('💡 Jalankan: python -m http.server 3000');
+                console.warn('💡 Atau gunakan: fix-cors.bat');
+            } else {
+                console.warn('⚠️ Backend tidak tersedia, menggunakan mode fallback. Error:', error.message);
+            }
             return false;
         }
     }
@@ -32,7 +38,7 @@ class ApiService {
             console.log('🔍 Backend health check result:', isBackendAvailable);
             
             if (isBackendAvailable) {
-                console.log('🌐 Fetching products from backend:', getApiUrl('products'));
+                console.log('🌐 Fetching products from dashboard backend:', getApiUrl('products'));
                 const response = await fetch(getApiUrl('products'));
                 
                 if (!response.ok) {
@@ -40,15 +46,17 @@ class ApiService {
                 }
                 
                 const data = await response.json();
-                console.log('📦 Raw response from backend:', data);
+                console.log('📦 Raw response from dashboard backend:', data);
                 
                 let products = data.products || data;
-                console.log('📋 Products array:', products);
+                console.log('📋 Products array from dashboard:', products);
                 
-                // Debug: Show structure of first product only if needed
                 if (products && products.length > 0) {
-                    console.log('🔍 Loaded products from backend:', products.length);
+                    console.log('✅ Loaded', products.length, 'products from dashboard backend');
                     console.log('🔍 First product example:', products[0]);
+                } else {
+                    console.log('⚠️ No products found in dashboard, using fallback');
+                    return this.getFallbackProducts();
                 }
                 
                 // Smart image URL detection for backend products
@@ -67,13 +75,15 @@ class ApiService {
                                            product.media;
                                            
                     console.log(`🖼️ Processing product ${product.name}:`);
+                    console.log('  - Original product data:', product);
                     console.log('  - Selected field image_url:', product.image_url);
-                    console.log('  - Final imageUrl:', originalImageUrl);
+                    console.log('  - Selected field imageUrl:', product.imageUrl);
+                    console.log('  - Final selected URL:', originalImageUrl);
                     
-                    if (originalImageUrl && originalImageUrl !== 'undefined') {
+                    if (originalImageUrl && originalImageUrl !== 'undefined' && originalImageUrl !== 'null') {
                         // Try to find working image URL
                         product.imageUrl = await this.findWorkingImageUrl(originalImageUrl);
-                        console.log('  - Final imageUrl:', product.imageUrl);
+                        console.log('  - Final processed imageUrl:', product.imageUrl);
                     } else {
                         console.log('  - No image URL found, using fallback');
                         product.imageUrl = 'img/Pitipaw.png';
