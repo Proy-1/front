@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PITIPAW Craft - Tailwind</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- API Configuration -->
     <script src="js/config.js"></script>
     <script src="js/api-service.js"></script>
     <style>
@@ -21,30 +20,33 @@
         .font-playfair {
             font-family: 'Playfair Display', serif;
         }
-
     </style>
 </head>
 
 <body class="relative">
 
     <header class="flex items-center justify-between bg-pink-200 px-6 py-4 shadow-md sticky top-0 z-10">
-        <button aria-label="Cart" class="text-pink-700 text-3xl">
+        <a href="#" id="cart-icon-link" aria-label="Cart" class="relative text-pink-700 text-3xl">
             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-8 h-8" viewBox="0 0 24 24">
                 <path
                     d="M7 18c-1.104 0-2 .896-2 2s.896 2 2 2 2-.896 2-2-.896-2-2-2zm10 0c-1.104 0-2 .896-2 2s.896 2 2 2 2-.896 2-2-.896-2-2-2zm-12.83-2.25l1.72-7.5h12.22l1.5 6.5h-14.5z" />
             </svg>
-        </button>
+            <span id="cart-item-count"
+                class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">
+            </span>
+        </a>
+
         <h1 class="font-playfair text-pink-800 text-3xl font-bold tracking-wide">PITIPAW</h1>
-        <button aria-label="User" class="text-pink-700 text-3xl">
+
+        <a href="login.html" aria-label="User" class="text-pink-700 text-3xl">
             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-8 h-8" viewBox="0 0 24 24">
                 <path
                     d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
-        </button>
+        </a>
     </header>
 
     <main class="max-w-7xl mx-auto px-6 py-10">
-
         <section class="flex flex-col md:flex-row items-center gap-10 mb-16">
             <div class="md:w-1/2 text-pink-900">
                 <h2 class="font-playfair text-6xl font-bold leading-tight mb-6 tracking-widest">PITIPAW<br />CRAFT</h2>
@@ -58,7 +60,6 @@
                     SHOP NOW!
                 </button>
             </div>
-
             <div class="md:w-1/2 relative rounded-3xl overflow-hidden bg-pink-100" style="aspect-ratio: 4 / 3;">
                 <div id="checkerboard-container"
                     class="absolute inset-0 grid grid-cols-8 grid-rows-8 gap-0.5 rounded-3xl">
@@ -74,7 +75,8 @@
                 <div class="flex items-center space-x-4">
                     <div id="backend-status" class="text-sm"></div>
                     <div id="product-count" class="text-sm text-gray-600"></div>
-                    <button id="refresh-products" class="bg-pink-400 text-white px-4 py-2 rounded-lg hover:bg-pink-500 transition-colors">
+                    <button id="refresh-products"
+                        class="bg-pink-400 text-white px-4 py-2 rounded-lg hover:bg-pink-500 transition-colors">
                         Refresh Produk
                     </button>
                 </div>
@@ -89,8 +91,107 @@
     </main>
 
     <script>
-        // --- SCRIPT UNTUK HERO SECTION ---
-        // Membuat pola papan catur di background gambar hero
+        // --- [UPDATED] FUNGSI UNTUK OTENTIKASI & KERANJANG ---
+        
+        // Fungsi untuk memeriksa status login pengguna
+        function isUserLoggedIn() {
+            // Kita anggap login jika ada token di localStorage
+            return localStorage.getItem('pitipaw_user_token') !== null;
+        }
+
+        // Fungsi untuk mengupdate badge notifikasi di ikon keranjang
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('pitipaw_cart') || '[]');
+            const cartCountEl = document.getElementById('cart-item-count');
+            if (!cartCountEl) return;
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            // Tampilkan badge hanya jika user sudah login dan ada barang di keranjang
+            if (totalItems > 0 && isUserLoggedIn()) {
+                cartCountEl.textContent = totalItems;
+                cartCountEl.classList.remove('hidden');
+            } else {
+                cartCountEl.classList.add('hidden');
+            }
+        }
+
+        // Fungsi untuk menambahkan produk ke keranjang, sekarang butuh login
+        function addToCart(product, quantity = 1) {
+            if (!isUserLoggedIn()) {
+                alert('Anda harus login terlebih dahulu untuk menambahkan barang ke keranjang.');
+                window.location.href = 'login.html'; // Arahkan ke halaman login
+                return; // Hentikan proses
+            }
+
+            const cart = JSON.parse(localStorage.getItem('pitipaw_cart') || '[]');
+            const existingItem = cart.find(item => item.id === product._id);
+
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({
+                    id: product._id,
+                    name: product.name,
+                    price: product.price,
+                    imageUrl: product.imageUrl,
+                    quantity: quantity
+                });
+            }
+            localStorage.setItem('pitipaw_cart', JSON.stringify(cart));
+            updateCartCount();
+        }
+        
+        // Fungsi untuk menampilkan pesan notifikasi
+        function showMessage(message, type = 'success') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm text-white ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'info' ? 'bg-blue-500' : 'bg-red-500'
+            }`;
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+            setTimeout(() => { messageDiv.remove(); }, 3000);
+        }
+
+        // Fungsi untuk mengatur link ikon keranjang (ke WhatsApp atau ke Login)
+        function setupCartIconLink() {
+            const cartIcon = document.getElementById('cart-icon-link');
+            if (!cartIcon) return;
+
+            cartIcon.addEventListener('click', (event) => {
+                event.preventDefault(); // Mencegah navigasi default dari tag <a>
+
+                if (!isUserLoggedIn()) {
+                    // Jika belum login, arahkan ke halaman login
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Jika sudah login, lanjutkan ke proses WhatsApp
+                const cart = JSON.parse(localStorage.getItem('pitipaw_cart') || '[]');
+                if (cart.length === 0) {
+                    showMessage('Keranjang Anda masih kosong!', 'info');
+                    return;
+                }
+
+                // Buat pesan WhatsApp dari isi keranjang
+                let message = 'Halo, saya ingin memesan:\n\n';
+                let total = 0;
+                cart.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+                    message += `▶️ ${item.name}\n`;
+                    message += `   Qty: ${item.quantity} x ${apiService.formatPrice(item.price)}\n\n`;
+                });
+                message += `*Total Pesanan: ${apiService.formatPrice(total)}*\n\n`;
+                message += 'Mohon konfirmasi pesanan saya. Terima kasih!';
+
+                const whatsappUrl = `https://wa.me/+6283137760847?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+            });
+        }
+
+        // --- SCRIPT BAWAAN ANDA ---
         const checkerboardContainer = document.getElementById('checkerboard-container');
         if (checkerboardContainer) {
             const rows = 8;
@@ -104,222 +205,127 @@
             }
         }
 
-        // --- SCRIPT UNTUK PRODUCT GRID (DINAMIS) ---
         let currentProducts = [];
 
-        // Status backend
         async function checkAndDisplayBackendStatus() {
             const statusElement = document.getElementById('backend-status');
-            
             try {
-                console.log('🔍 Testing backend connection...');
                 const isHealthy = await apiService.checkBackendHealth();
-                console.log('🔍 Backend health result:', isHealthy);
-                
                 if (isHealthy) {
                     statusElement.innerHTML = '<span class="text-green-600">🟢 Backend Terhubung</span>';
-                    console.log('✅ Backend tersedia - produk akan dimuat dari dashboard');
                 } else {
                     statusElement.innerHTML = '<span class="text-orange-600">🟡 Mode Offline</span>';
-                    console.log('⚠️ Backend tidak tersedia - menggunakan produk fallback');
-                    console.log('💡 Pastikan backend dashboard berjalan di http://localhost:5000');
                 }
             } catch (error) {
-                console.error('❌ Error checking backend status:', error);
                 statusElement.innerHTML = '<span class="text-red-600">❌ Backend Error</span>';
-                console.log('💡 Untuk menjalankan backend: cd ke folder dashboard dan jalankan "go run main.go"');
             }
         }
 
-        // Load products dari API
         async function loadProducts() {
             const loadingIndicator = document.getElementById('loading-indicator');
             const productGrid = document.getElementById('product-grid');
             const productCount = document.getElementById('product-count');
             
-            // Show loading
             loadingIndicator.classList.remove('hidden');
             productGrid.innerHTML = '';
             productCount.innerHTML = '';
             
             try {
-                console.log('📦 Memuat produk dari API...');
-                
-                // Fetch products dari API
                 currentProducts = await apiService.getProducts();
-                console.log('📦 Loaded products:', currentProducts.length, 'items');
-                
-                // Update product count
                 if (currentProducts.length > 0) {
-                    const backendCount = currentProducts.filter(p => !p.name.includes('CALMY') || p._id !== '1').length;
-                    if (backendCount > 0) {
-                        productCount.innerHTML = `📦 ${currentProducts.length} produk (${backendCount} dari dashboard)`;
-                    } else {
-                        productCount.innerHTML = `📦 ${currentProducts.length} produk (mode fallback)`;
-                    }
+                     productCount.innerHTML = `📦 ${currentProducts.length} produk`;
                 } else {
                     productCount.innerHTML = '📦 Belum ada produk';
                 }
-                
-                // Hide loading
                 loadingIndicator.classList.add('hidden');
-                
-                // Render products
                 renderProducts(currentProducts);
-                
             } catch (error) {
-                console.error('❌ Error loading products:', error);
                 loadingIndicator.classList.add('hidden');
-                productGrid.innerHTML = '<div class="col-span-full text-center text-red-600 p-8 bg-red-50 rounded-lg">❌ Error memuat produk. Pastikan backend dashboard berjalan di http://localhost:5000</div>';
+                productGrid.innerHTML = '<div class="col-span-full text-center text-red-600 p-8 bg-red-50 rounded-lg">❌ Error memuat produk.</div>';
                 productCount.innerHTML = '❌ Error';
             }
         }
 
-        // Render products ke grid
         function renderProducts(products) {
             const productGrid = document.getElementById('product-grid');
             productGrid.innerHTML = '';
 
-            // Debug: log product image URLs
-            console.log('🖼️ Product Images Debug:', products.map(p => ({
-                name: p.name,
-                imageUrl: p.imageUrl,
-                normalizedUrl: apiService ? apiService.normalizeImageUrl(p.imageUrl) : p.imageUrl
-            })));
-
-            // Loop melalui data produk dan buat kartunya
             products.forEach(product => {
                 const card = document.createElement('div');
                 card.className = 'bg-pink-200 p-4 flex flex-col items-center rounded-md hover:shadow-lg transition-shadow cursor-pointer';
-                
-                // Format harga
                 const formattedPrice = apiService.formatPrice(product.price);
                 
                 card.innerHTML = `
-                    <img src="${product.imageUrl}" alt="${product.name}" 
-                         class="mb-3 w-full h-48 object-cover border-4 border-black rounded-md" 
-                         onerror="this.src='img/Pitipaw.png'; console.warn('Failed to load image:', '${product.imageUrl}'); this.onerror=null;" 
-                         loading="lazy" />
+                    <img src="${product.imageUrl}" alt="${product.name}" class="mb-3 w-full h-48 object-cover border-4 border-black rounded-md" onerror="this.src='img/Pitipaw.png';" loading="lazy" />
                     <h3 class="font-bold text-pink-800 text-lg uppercase text-center">${product.name}</h3>
                     <p class="text-pink-700 font-semibold">${formattedPrice}</p>
                     ${product.stock ? `<p class="text-sm text-pink-600">Stok: ${product.stock}</p>` : ''}
                     ${product.description ? `<p class="text-xs text-gray-600 mt-2 text-center line-clamp-2">${product.description}</p>` : ''}
                 `;
-                
-                // Add click handler untuk detail produk
                 card.addEventListener('click', () => showProductDetail(product));
-                
                 productGrid.appendChild(card);
             });
 
-            // Tambahkan kartu "Lihat Koleksi Lainnya" di akhir
             const moreCard = document.createElement('div');
             moreCard.className = 'bg-gradient-to-br from-pink-300 to-pink-400 p-4 flex flex-col items-center justify-center rounded-md cursor-pointer select-none hover:shadow-lg transition-shadow';
             moreCard.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3"
-                    stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 text-white mb-2"
-                    viewBox="0 0 24 24">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 text-white mb-2" viewBox="0 0 24 24">
                     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l11 11Z"/>
                 </svg>
                 <span class="text-white font-bold text-center">Koleksi Lainnya</span>
                 <span class="text-pink-100 text-sm">Coming Soon</span>
             `;
-            
             productGrid.appendChild(moreCard);
         }
 
-        // Show product detail modal
         function showProductDetail(product) {
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
-            
             const formattedPrice = apiService.formatPrice(product.price);
             
             modal.innerHTML = `
                 <div class="bg-white rounded-lg max-w-md w-full p-6 relative">
-                    <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl" onclick="this.closest('.fixed').remove()">
-                        ×
-                    </button>
-                    <img src="${product.imageUrl}" alt="${product.name}" 
-                         class="w-full h-64 object-cover rounded-lg mb-4"
-                         onerror="this.src='img/Pitipaw.png'; console.warn('Failed to load image:', '${product.imageUrl}'); this.onerror=null;" 
-                         loading="lazy" />
+                    <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl" onclick="this.closest('.fixed').remove()">×</button>
+                    <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-64 object-cover rounded-lg mb-4" onerror="this.src='img/Pitipaw.png';" loading="lazy" />
                     <h3 class="text-2xl font-bold text-pink-800 mb-2">${product.name}</h3>
                     <p class="text-xl text-pink-700 font-semibold mb-2">${formattedPrice}</p>
-                    ${product.stock ? `<p class="text-sm text-gray-600 mb-2">Stok tersedia: ${product.stock}</p>` : ''}
-                    ${product.category ? `<p class="text-sm text-gray-600 mb-2">Kategori: ${product.category}</p>` : ''}
-                    ${product.description ? `<p class="text-gray-700 mb-4">${product.description}</p>` : ''}
                     <div class="flex space-x-2">
-                        <button class="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition-colors flex-1">
-                            Beli Sekarang
-                        </button>
-                        <button class="border border-pink-500 text-pink-500 px-4 py-2 rounded-lg hover:bg-pink-50 transition-colors">
-                            Tambah ke Keranjang
-                        </button>
+                        <button class="bg-pink-700 text-white px-4 py-2 rounded-lg hover:bg-pink-800 transition-colors flex-1">Beli Sekarang</button>
+                        <button id="modal-add-to-cart-btn" class="border border-pink-500 text-pink-500 px-4 py-2 rounded-lg hover:bg-pink-50 transition-colors">Tambah ke Keranjang</button>
                     </div>
                 </div>
             `;
             
-            // Close modal when clicking outside
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
+                if (e.target === modal) modal.remove();
             });
             
             document.body.appendChild(modal);
+
+            document.getElementById('modal-add-to-cart-btn').addEventListener('click', () => {
+                addToCart(product); // Panggil fungsi addToCart yang sudah divalidasi
+                if (isUserLoggedIn()) {
+                    showMessage(`"${product.name}" ditambahkan ke keranjang!`);
+                    modal.remove();
+                }
+            });
         }
 
-        // Event listeners
+        // --- Event listeners & Inisialisasi ---
         document.getElementById('refresh-products').addEventListener('click', loadProducts);
 
-        // Initialize ketika halaman dimuat
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🚀 Initializing PITIPAW frontend...');
-            console.log('📍 Backend URL:', API_CONFIG.baseURL);
-            console.log('📍 Products API:', getApiUrl('products'));
+            console.log('🚀 PITIPAW frontend initialized.');
+            setupCartIconLink(); // Atur fungsi ikon keranjang
+            updateCartCount(); // Perbarui tampilan badge keranjang
             
             await checkAndDisplayBackendStatus();
             await loadProducts();
-            
-            // Show helpful message if no backend
-            setTimeout(async () => {
-                const isHealthy = await apiService.checkBackendHealth();
-                if (!isHealthy) {
-                    console.log('💡 CARA MENGATASI MASALAH CORS:');
-                    console.log('1. Buka terminal/command prompt di folder ini');
-                    console.log('2. Jalankan: fix-cors.bat');
-                    console.log('3. Atau manual: python -m http.server 3000');
-                    console.log('4. Buka http://localhost:3000/user.html');
-                    console.log('5. Produk dari dashboard akan muncul otomatis');
-                    
-                    // Show CORS warning banner
-                    const banner = document.createElement('div');
-                    banner.className = 'fixed top-16 left-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-40';
-                    banner.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                </svg>
-                                <div>
-                                    <strong>⚠️ CORS Error:</strong> Backend tersedia tapi diblokir oleh browser.<br>
-                                    <strong>Solusi:</strong> Jalankan <code>fix-cors.bat</code> lalu buka <code>http://localhost:3000/user.html</code>
-                                </div>
-                            </div>
-                            <button onclick="this.parentElement.parentElement.remove()" class="text-red-700 hover:text-red-900 font-bold text-xl ml-4">&times;</button>
-                        </div>
-                    `;
-                    document.body.appendChild(banner);
-                }
-            }, 2000);
         });
 
-        // Auto refresh setiap 5 menit
         setInterval(async () => {
             await checkAndDisplayBackendStatus();
         }, 5 * 60 * 1000);
     </script>
 </body>
-
 </html>
