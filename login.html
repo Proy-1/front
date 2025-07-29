@@ -2,25 +2,25 @@
 <html lang="id">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - PitipawShop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap');
+        @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap");
 
         body {
-            font-family: 'Cormorant Garamond', serif;
-            background-color: #FFF9F9;
+            font-family: "Cormorant Garamond", serif;
+            background-color: #fff9f9;
         }
 
         .form-input {
-            color: #4A4A4A;
+            color: #4a4a4a;
         }
 
         .form-input:focus {
-            border-color: #9D174D;
-            box-shadow: 0 0 0 1px #9D174D;
+            border-color: #9d174d;
+            box-shadow: 0 0 0 1px #9d174d;
         }
 
         /* --- CSS UNTUK ANIMASI --- */
@@ -45,12 +45,12 @@
 </head>
 
 <body class="min-h-screen flex items-center justify-center px-4">
-
     <div id="login-container" class="w-full max-w-md opacity-0">
         <div class="bg-white py-8 px-6 shadow-lg rounded-lg">
-
             <header class="text-center mb-8">
-                <h1 class="text-5xl font-bold tracking-widest text-pink-800">PITIPAW</h1>
+                <h1 class="text-5xl font-bold tracking-widest text-pink-800">
+                    PITIPAW
+                </h1>
                 <p class="text-gray-500 mt-2">Silakan Masuk!</p>
             </header>
 
@@ -58,7 +58,7 @@
                 <div class="mb-4">
                     <label for="email" class="block text-sm font-bold text-gray-700">Alamat Email</label>
                     <input type="email" name="email" id="email" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none form-input sm:text-sm">
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none form-input sm:text-sm" />
                 </div>
                 <div class="mb-6">
                     <div class="flex justify-between items-baseline">
@@ -66,7 +66,7 @@
                         <a href="#" class="text-sm text-pink-700 hover:text-pink-800">Lupa password?</a>
                     </div>
                     <input type="password" name="password" id="password" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none form-input sm:text-sm">
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none form-input sm:text-sm" />
                 </div>
                 <div>
                     <button type="submit"
@@ -86,17 +86,14 @@
     </div>
 
     <script>
-
         // --- SCRIPT UNTUK ANIMASI FADE IN ---
-        document.addEventListener('DOMContentLoaded', function () {
-            const loginContainer = document.getElementById('login-container');
-            loginContainer.classList.remove('opacity-0');
-            loginContainer.classList.add('animate-fade-in-up');
+        document.addEventListener("DOMContentLoaded", function () {
+            const loginContainer = document.getElementById("login-container");
+            loginContainer.classList.remove("opacity-0");
+            loginContainer.classList.add("animate-fade-in-up");
         });
         // --- SCRIPT UNTUK ANIMASI FADE IN ---
-
     </script>
-
 </body>
 
 </html>
