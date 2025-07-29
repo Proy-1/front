@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PITIPAW Craft - Detail Produk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- API Configuration -->
+    <script src="js/config.js"></script>
+    <script src="js/api-service.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+
+        body {
+            font-family: 'TT Norms', sans-serif;
+            background-color: #fff0f6;
+        }
+
+        .font-playfair {
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="flex items-center justify-between bg-pink-200 px-6 py-4 shadow-md sticky top-0 z-10">
+        <button onclick="history.back()" aria-label="Back" class="text-pink-700 text-3xl">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8" viewBox="0 0 24 24">
+                <path d="M19 12H5"/>
+                <path d="M12 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        <h1 class="font-playfair text-pink-800 text-3xl font-bold tracking-wide">PITIPAW</h1>
+        <button aria-label="Cart" class="text-pink-700 text-3xl">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-8 h-8" viewBox="0 0 24 24">
+                <path
+                    d="M7 18c-1.104 0-2 .896-2 2s.896 2 2 2 2-.896 2-2-.896-2-2-2zm10 0c-1.104 0-2 .896-2 2s.896 2 2 2 2-.896 2-2-.896-2-2-2zm-12.83-2.25l1.72-7.5h12.22l1.5 6.5h-14.5z" />
+            </svg>
+        </button>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-10">
+        <div id="loading-indicator" class="text-center py-20">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
+            <p class="mt-4 text-pink-600 text-lg">Memuat detail produk...</p>
+        </div>
+
+        <div id="product-detail" class="hidden">
+            <!-- Content will be loaded dynamically -->
+        </div>
+
+        <div id="error-message" class="hidden text-center py-20">
+            <div class="text-red-600 text-lg mb-4">Produk tidak ditemukan</div>
+            <button onclick="history.back()" class="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
+                Kembali
+            </button>
+        </div>
+    </main>
+
+    <script>
+        async function loadProductDetail() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const productDetail = document.getElementById('product-detail');
+            const errorMessage = document.getElementById('error-message');
+
+            if (!productId) {
+                loadingIndicator.classList.add('hidden');
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const product = await apiService.getProduct(productId);
+                
+                if (!product) {
+                    throw new Error('Produk tidak ditemukan');
+                }
+
+                loadingIndicator.classList.add('hidden');
+                productDetail.classList.remove('hidden');
+
+                const formattedPrice = apiService.formatPrice(product.price);
+
+                productDetail.innerHTML = `
+                    <div class="grid md:grid-cols-2 gap-10">
+                        <div>
+                            <img src="${product.imageUrl}" alt="${product.name}" 
+                                 class="w-full h-96 object-cover rounded-2xl border-4 border-pink-300"
+                                 onerror="this.src='img/Pitipaw.png'; console.warn('Failed to load image:', '${product.imageUrl}'); this.onerror=null;" 
+                                 loading="lazy" />
+                        </div>
+                        
+                        <div class="flex flex-col justify-center">
+                            <h1 class="font-playfair text-4xl font-bold text-pink-800 mb-4">${product.name}</h1>
+                            <p class="text-3xl text-pink-700 font-bold mb-4">${formattedPrice}</p>
+                            
+                            ${product.stock ? `<p class="text-gray-600 mb-4">Stok tersedia: <span class="font-semibold">${product.stock}</span></p>` : ''}
+                            ${product.category ? `<p class="text-gray-600 mb-4">Kategori: <span class="font-semibold capitalize">${product.category}</span></p>` : ''}
+                            
+                            ${product.description ? `
+                                <div class="mb-6">
+                                    <h3 class="text-lg font-semibold text-pink-800 mb-2">Deskripsi Produk</h3>
+                                    <p class="text-gray-700 leading-relaxed">${product.description}</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center space-x-4">
+                                    <label class="text-pink-800 font-semibold">Jumlah:</label>
+                                    <div class="flex items-center border border-pink-300 rounded-lg">
+                                        <button id="decrease-qty" class="px-3 py-2 text-pink-600 hover:bg-pink-50">-</button>
+                                        <input id="quantity" type="number" value="1" min="1" max="${product.stock || 99}" 
+                                               class="w-16 text-center border-none focus:outline-none">
+                                        <button id="increase-qty" class="px-3 py-2 text-pink-600 hover:bg-pink-50">+</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex space-x-4">
+                                    <button id="add-to-cart" class="flex-1 bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition-colors">
+                                        Tambah ke Keranjang
+                                    </button>
+                                    <button id="buy-now" class="flex-1 bg-pink-700 text-white py-3 rounded-lg font-semibold hover:bg-pink-800 transition-colors">
+                                        Beli Sekarang
+                                    </button>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <a href="https://wa.me/+6283137760847?text=Halo, saya tertarik dengan produk ${product.name}" 
+                                       target="_blank" 
+                                       class="inline-flex items-center text-green-600 hover:text-green-700 font-semibold">
+                                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.109"/>
+                                        </svg>
+                                        Hubungi via WhatsApp
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Setup quantity controls
+                setupQuantityControls(product);
+                setupPurchaseButtons(product);
+
+            } catch (error) {
+                console.error('Error loading product detail:', error);
+                loadingIndicator.classList.add('hidden');
+                errorMessage.classList.remove('hidden');
+            }
+        }
+
+        function setupQuantityControls(product) {
+            const quantityInput = document.getElementById('quantity');
+            const decreaseBtn = document.getElementById('decrease-qty');
+            const increaseBtn = document.getElementById('increase-qty');
+            const maxStock = product.stock || 99;
+
+            decreaseBtn.addEventListener('click', () => {
+                const currentValue = parseInt(quantityInput.value);
+                if (currentValue > 1) {
+                    quantityInput.value = currentValue - 1;
+                }
+            });
+
+            increaseBtn.addEventListener('click', () => {
+                const currentValue = parseInt(quantityInput.value);
+                if (currentValue < maxStock) {
+                    quantityInput.value = currentValue + 1;
+                }
+            });
+
+            quantityInput.addEventListener('change', () => {
+                const value = parseInt(quantityInput.value);
+                if (value < 1) quantityInput.value = 1;
+                if (value > maxStock) quantityInput.value = maxStock;
+            });
+        }
+
+        function setupPurchaseButtons(product) {
+            const addToCartBtn = document.getElementById('add-to-cart');
+            const buyNowBtn = document.getElementById('buy-now');
+            const quantityInput = document.getElementById('quantity');
+
+            addToCartBtn.addEventListener('click', () => {
+                const quantity = parseInt(quantityInput.value);
+                addToCart(product, quantity);
+            });
+
+            buyNowBtn.addEventListener('click', () => {
+                const quantity = parseInt(quantityInput.value);
+                buyNow(product, quantity);
+            });
+        }
+
+        function addToCart(product, quantity) {
+            // Implementasi add to cart
+            const cart = JSON.parse(localStorage.getItem('pitipaw_cart') || '[]');
+            const existingItem = cart.find(item => item.id === product._id);
+
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({
+                    id: product._id,
+                    name: product.name,
+                    price: product.price,
+                    imageUrl: product.imageUrl,
+                    quantity: quantity
+                });
+            }
+
+            localStorage.setItem('pitipaw_cart', JSON.stringify(cart));
+            
+            // Show success message
+            showMessage('Produk berhasil ditambahkan ke keranjang!', 'success');
+        }
+
+        function buyNow(product, quantity) {
+            // Langsung ke WhatsApp dengan detail pesanan
+            const message = `Halo, saya ingin membeli:
+Produk: ${product.name}
+Jumlah: ${quantity}
+Total: ${apiService.formatPrice(product.price * quantity)}
+
+Mohon konfirmasi ketersediaan dan cara pembayaran. Terima kasih!`;
+
+            const whatsappUrl = `https://wa.me/+6283137760847?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function showMessage(message, type = 'info') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            messageDiv.textContent = message;
+
+            document.body.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', loadProductDetail);
+    </script>
+</body>
+
+</html>

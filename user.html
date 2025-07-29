@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PITIPAW Craft - Tailwind</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- API Configuration -->
+    <script src="js/config.js"></script>
+    <script src="js/api-service.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
@@ -90,6 +93,20 @@
         </section>
 
         <section>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-pink-800">Produk Kami</h2>
+                <div class="flex items-center space-x-4">
+                    <div id="backend-status" class="text-sm"></div>
+                    <div id="product-count" class="text-sm text-gray-600"></div>
+                    <button id="refresh-products" class="bg-pink-400 text-white px-4 py-2 rounded-lg hover:bg-pink-500 transition-colors">
+                        Refresh Produk
+                    </button>
+                </div>
+            </div>
+            <div id="loading-indicator" class="text-center py-8 hidden">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
+                <p class="mt-2 text-pink-600">Memuat produk...</p>
+            </div>
             <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-10">
             </div>
         </section>
@@ -116,44 +133,221 @@
             }
         }
 
-        // --- SCRIPT UNTUK PRODUCT GRID ---
-        const productsData = [
-            { name: 'CALMY', price: 'IDR 15.000', imageUrl: 'img/calmy.png' },
-            { name: 'MARIPOSA', price: 'IDR 18.000', imageUrl: 'img/mrps.png' },
-            { name: 'SEA', price: 'IDR 12.000', imageUrl: 'img/sea.png' },
-            { name: 'CUTIE', price: 'IDR 20.000', imageUrl: 'img/ct.png' },
-            { name: 'CANDY', price: 'IDR 15.000', imageUrl: 'img/cnd.png' },
-            { name: 'BEE', price: 'IDR 17.000', imageUrl: 'img/bee.png' },
-        ];
+        // --- SCRIPT UNTUK PRODUCT GRID (DINAMIS) ---
+        let currentProducts = [];
 
-        const productGrid = document.getElementById('product-grid');
+        // Status backend
+        async function checkAndDisplayBackendStatus() {
+            const statusElement = document.getElementById('backend-status');
+            
+            try {
+                console.log('🔍 Testing backend connection...');
+                const isHealthy = await apiService.checkBackendHealth();
+                console.log('🔍 Backend health result:', isHealthy);
+                
+                if (isHealthy) {
+                    statusElement.innerHTML = '<span class="text-green-600">🟢 Backend Terhubung</span>';
+                    console.log('✅ Backend tersedia - produk akan dimuat dari dashboard');
+                } else {
+                    statusElement.innerHTML = '<span class="text-orange-600">🟡 Mode Offline</span>';
+                    console.log('⚠️ Backend tidak tersedia - menggunakan produk fallback');
+                    console.log('💡 Pastikan backend dashboard berjalan di http://localhost:5000');
+                }
+            } catch (error) {
+                console.error('❌ Error checking backend status:', error);
+                statusElement.innerHTML = '<span class="text-red-600">❌ Backend Error</span>';
+                console.log('💡 Untuk menjalankan backend: cd ke folder dashboard dan jalankan "go run main.go"');
+            }
+        }
 
-        // Loop melalui data produk dan buat kartunya
-        productsData.forEach(product => {
-            const card = document.createElement('div');
-            card.className = 'bg-pink-200 p-4 flex flex-col items-center rounded-md';
-            card.innerHTML = `
-                <img src="${product.imageUrl}" alt="${product.name}" class="mb-3 w-full h-48 object-cover border-4 border-black" />
-                <h3 class="font-bold text-pink-800 text-lg uppercase">${product.name}</h3>
-                <p class="text-pink-700">${product.price}</p>
+        // Load products dari API
+        async function loadProducts() {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const productGrid = document.getElementById('product-grid');
+            const productCount = document.getElementById('product-count');
+            
+            // Show loading
+            loadingIndicator.classList.remove('hidden');
+            productGrid.innerHTML = '';
+            productCount.innerHTML = '';
+            
+            try {
+                console.log('📦 Memuat produk dari API...');
+                
+                // Fetch products dari API
+                currentProducts = await apiService.getProducts();
+                console.log('📦 Loaded products:', currentProducts.length, 'items');
+                
+                // Update product count
+                if (currentProducts.length > 0) {
+                    const backendCount = currentProducts.filter(p => !p.name.includes('CALMY') || p._id !== '1').length;
+                    if (backendCount > 0) {
+                        productCount.innerHTML = `📦 ${currentProducts.length} produk (${backendCount} dari dashboard)`;
+                    } else {
+                        productCount.innerHTML = `📦 ${currentProducts.length} produk (mode fallback)`;
+                    }
+                } else {
+                    productCount.innerHTML = '📦 Belum ada produk';
+                }
+                
+                // Hide loading
+                loadingIndicator.classList.add('hidden');
+                
+                // Render products
+                renderProducts(currentProducts);
+                
+            } catch (error) {
+                console.error('❌ Error loading products:', error);
+                loadingIndicator.classList.add('hidden');
+                productGrid.innerHTML = '<div class="col-span-full text-center text-red-600 p-8 bg-red-50 rounded-lg">❌ Error memuat produk. Pastikan backend dashboard berjalan di http://localhost:5000</div>';
+                productCount.innerHTML = '❌ Error';
+            }
+        }
+
+        // Render products ke grid
+        function renderProducts(products) {
+            const productGrid = document.getElementById('product-grid');
+            productGrid.innerHTML = '';
+
+            // Debug: log product image URLs
+            console.log('🖼️ Product Images Debug:', products.map(p => ({
+                name: p.name,
+                imageUrl: p.imageUrl,
+                normalizedUrl: apiService ? apiService.normalizeImageUrl(p.imageUrl) : p.imageUrl
+            })));
+
+            // Loop melalui data produk dan buat kartunya
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'bg-pink-200 p-4 flex flex-col items-center rounded-md hover:shadow-lg transition-shadow cursor-pointer';
+                
+                // Format harga
+                const formattedPrice = apiService.formatPrice(product.price);
+                
+                card.innerHTML = `
+                    <img src="${product.imageUrl}" alt="${product.name}" 
+                         class="mb-3 w-full h-48 object-cover border-4 border-black rounded-md" 
+                         onerror="this.src='img/Pitipaw.png'; console.warn('Failed to load image:', '${product.imageUrl}'); this.onerror=null;" 
+                         loading="lazy" />
+                    <h3 class="font-bold text-pink-800 text-lg uppercase text-center">${product.name}</h3>
+                    <p class="text-pink-700 font-semibold">${formattedPrice}</p>
+                    ${product.stock ? `<p class="text-sm text-pink-600">Stok: ${product.stock}</p>` : ''}
+                    ${product.description ? `<p class="text-xs text-gray-600 mt-2 text-center line-clamp-2">${product.description}</p>` : ''}
+                `;
+                
+                // Add click handler untuk detail produk
+                card.addEventListener('click', () => showProductDetail(product));
+                
+                productGrid.appendChild(card);
+            });
+
+            // Tambahkan kartu "Lihat Koleksi Lainnya" di akhir
+            const moreCard = document.createElement('div');
+            moreCard.className = 'bg-gradient-to-br from-pink-300 to-pink-400 p-4 flex flex-col items-center justify-center rounded-md cursor-pointer select-none hover:shadow-lg transition-shadow';
+            moreCard.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3"
+                    stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 text-white mb-2"
+                    viewBox="0 0 24 24">
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l11 11Z"/>
+                </svg>
+                <span class="text-white font-bold text-center">Koleksi Lainnya</span>
+                <span class="text-pink-100 text-sm">Coming Soon</span>
             `;
-            productGrid.appendChild(card);
+            
+            productGrid.appendChild(moreCard);
+        }
+
+        // Show product detail modal
+        function showProductDetail(product) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            
+            const formattedPrice = apiService.formatPrice(product.price);
+            
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg max-w-md w-full p-6 relative">
+                    <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl" onclick="this.closest('.fixed').remove()">
+                        ×
+                    </button>
+                    <img src="${product.imageUrl}" alt="${product.name}" 
+                         class="w-full h-64 object-cover rounded-lg mb-4"
+                         onerror="this.src='img/Pitipaw.png'; console.warn('Failed to load image:', '${product.imageUrl}'); this.onerror=null;" 
+                         loading="lazy" />
+                    <h3 class="text-2xl font-bold text-pink-800 mb-2">${product.name}</h3>
+                    <p class="text-xl text-pink-700 font-semibold mb-2">${formattedPrice}</p>
+                    ${product.stock ? `<p class="text-sm text-gray-600 mb-2">Stok tersedia: ${product.stock}</p>` : ''}
+                    ${product.category ? `<p class="text-sm text-gray-600 mb-2">Kategori: ${product.category}</p>` : ''}
+                    ${product.description ? `<p class="text-gray-700 mb-4">${product.description}</p>` : ''}
+                    <div class="flex space-x-2">
+                        <button class="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition-colors flex-1">
+                            Beli Sekarang
+                        </button>
+                        <button class="border border-pink-500 text-pink-500 px-4 py-2 rounded-lg hover:bg-pink-50 transition-colors">
+                            Tambah ke Keranjang
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
+            document.body.appendChild(modal);
+        }
+
+        // Event listeners
+        document.getElementById('refresh-products').addEventListener('click', loadProducts);
+
+        // Initialize ketika halaman dimuat
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Initializing PITIPAW frontend...');
+            console.log('📍 Backend URL:', API_CONFIG.baseURL);
+            console.log('📍 Products API:', getApiUrl('products'));
+            
+            await checkAndDisplayBackendStatus();
+            await loadProducts();
+            
+            // Show helpful message if no backend
+            setTimeout(async () => {
+                const isHealthy = await apiService.checkBackendHealth();
+                if (!isHealthy) {
+                    console.log('💡 CARA MENGATASI MASALAH CORS:');
+                    console.log('1. Buka terminal/command prompt di folder ini');
+                    console.log('2. Jalankan: fix-cors.bat');
+                    console.log('3. Atau manual: python -m http.server 3000');
+                    console.log('4. Buka http://localhost:3000/user.html');
+                    console.log('5. Produk dari dashboard akan muncul otomatis');
+                    
+                    // Show CORS warning banner
+                    const banner = document.createElement('div');
+                    banner.className = 'fixed top-16 left-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-40';
+                    banner.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                                <div>
+                                    <strong>⚠️ CORS Error:</strong> Backend tersedia tapi diblokir oleh browser.<br>
+                                    <strong>Solusi:</strong> Jalankan <code>fix-cors.bat</code> lalu buka <code>http://localhost:3000/user.html</code>
+                                </div>
+                            </div>
+                            <button onclick="this.parentElement.parentElement.remove()" class="text-red-700 hover:text-red-900 font-bold text-xl ml-4">&times;</button>
+                        </div>
+                    `;
+                    document.body.appendChild(banner);
+                }
+            }, 2000);
         });
 
-        // Tambahkan kartu "Add New Product" di akhir
-        const addCard = document.createElement('div');
-        addCard.className = 'bg-pink-200 p-4 flex flex-col items-center justify-center rounded-md cursor-pointer select-none';
-        addCard.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3"
-                stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 text-black mb-2"
-                viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="16" />
-                <line x1="8" y1="12" x2="16" y2="12" />
-            </svg>
-            <span class="text-pink-800">add new product</span>
-        `;
-        productGrid.appendChild(addCard);
+        // Auto refresh setiap 5 menit
+        setInterval(async () => {
+            await checkAndDisplayBackendStatus();
+        }, 5 * 60 * 1000);
     </script>
 </body>
 
