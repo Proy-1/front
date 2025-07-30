@@ -1,10 +1,10 @@
 // Konfigurasi Frontend PITIPAW
 const API_CONFIG = {
     // Backend API URL - ubah sesuai environment
-    baseURL: 'http://localhost:5000',
+    baseURL: 'https://rifa.alwaysdata.net',
     
     // Static files URL (untuk gambar uploads)
-    staticURL: 'http://localhost:5000/static',
+    staticURL: 'https://rifa.alwaysdata.net/static',
     
     // API Endpoints
     endpoints: {
