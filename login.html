@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - PitipawShop</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap");
 
@@ -23,13 +26,11 @@
             box-shadow: 0 0 0 1px #9d174d;
         }
 
-        /* --- CSS UNTUK ANIMASI --- */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
                 transform: translateY(20px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -40,7 +41,12 @@
             animation: fadeInUp 0.7s ease-out forwards;
         }
 
-        /* ------------------------- */
+        /* [NEW] Kustomisasi warna pink untuk SweetAlert */
+        .swal2-confirm.swal2-styled {
+            background-color: #D6336C !important;
+            border-color: #D6336C !important;
+            box-shadow: none !important;
+        }
     </style>
 </head>
 
@@ -54,7 +60,7 @@
                 <p class="text-gray-500 mt-2">Silakan Masuk!</p>
             </header>
 
-            <form action="#" method="POST">
+            <form id="login-form" method="POST">
                 <div class="mb-4">
                     <label for="email" class="block text-sm font-bold text-gray-700">Alamat Email</label>
                     <input type="email" name="email" id="email" required
@@ -86,13 +92,91 @@
     </div>
 
     <script>
-        // --- SCRIPT UNTUK ANIMASI FADE IN ---
         document.addEventListener("DOMContentLoaded", function () {
+            // Animasi masuk
             const loginContainer = document.getElementById("login-container");
             loginContainer.classList.remove("opacity-0");
             loginContainer.classList.add("animate-fade-in-up");
+
+            const loginForm = document.getElementById("login-form");
+
+            loginForm.addEventListener("submit", function (event) {
+                event.preventDefault(); // Mencegah reload halaman
+
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value.trim();
+
+                // --- 1. Validasi Input ---
+                if (!email || !password) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Email dan Password wajib diisi!',
+                        confirmButtonColor: '#D6336C'
+                    });
+                    return;
+                }
+
+                // --- 2. Ambil data pengguna dari localStorage ---
+                const users = JSON.parse(localStorage.getItem('pitipaw_users') || '[]');
+                const user = users.find(u => u.email === email);
+
+                // --- 3. Cek kredensial ---
+                if (!user) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Login Gagal',
+                        text: 'Email tidak ditemukan. Silakan daftar terlebih dahulu.',
+                        confirmButtonColor: '#D6336C'
+                    });
+                    return;
+                }
+                
+                if (user.password !== password) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Login Gagal',
+                        text: 'Password yang Anda masukkan salah.',
+                        confirmButtonColor: '#D6336C'
+                    });
+                    return;
+                }
+
+                // --- 4. Proses Login Berhasil ---
+                Swal.fire({
+                    title: 'Memproses login...',
+                    text: 'Mohon tunggu sebentar.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Simulasi delay jaringan
+                setTimeout(() => {
+                    // **PENTING**: Set token login dan info user
+                    localStorage.setItem('pitipaw_user_token', user.email); // Token sederhana
+                    localStorage.setItem('pitipaw_user_info', JSON.stringify({
+                        fullname: user.fullname,
+                        email: user.email
+                    }));
+
+                    // Tampilkan notifikasi berhasil
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Login Berhasil!',
+                        text: `Selamat datang kembali, ${user.fullname}!`,
+                        confirmButtonColor: '#D6336C',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        // Arahkan ke halaman utama setelah login
+                        window.location.href = 'user.html';
+                    });
+
+                }, 1000);
+            });
         });
-        // --- SCRIPT UNTUK ANIMASI FADE IN ---
     </script>
 </body>
 

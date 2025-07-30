@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar - PitipawShop</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap');
 
@@ -22,25 +25,22 @@
             border-color: #9D174D;
             box-shadow: 0 0 0 1px #9D174D;
         }
-
-        /* --- CSS UNTUK ANIMASI --- */
+        
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .animate-fade-in-up {
             animation: fadeInUp 0.7s ease-out forwards;
         }
 
-        /* ------------------------- */
+        /* [NEW] Kustomisasi warna pink untuk SweetAlert */
+        .swal2-confirm.swal2-styled {
+            background-color: #D6336C !important; /* Warna pink untuk tombol OK */
+            border-color: #D6336C !important;
+            box-shadow: none !important;
+        }
     </style>
 </head>
 
@@ -54,7 +54,7 @@
                 <p class="text-gray-500 mt-2">Buat akun barumu.</p>
             </header>
 
-            <form action="#" method="POST">
+            <form id="register-form" method="POST">
                 <div class="mb-4">
                     <label for="fullname" class="block text-sm font-bold text-gray-700">Nama Lengkap</label>
                     <input type="text" name="fullname" id="fullname" required
@@ -71,8 +71,7 @@
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none form-input sm:text-sm">
                 </div>
                 <div class="mb-6">
-                    <label for="confirm-password" class="block text-sm font-bold text-gray-700">Konfirmasi
-                        Password</label>
+                    <label for="confirm-password" class="block text-sm font-bold text-gray-700">Konfirmasi Password</label>
                     <input type="password" name="confirm-password" id="confirm-password" required
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none form-input sm:text-sm">
                 </div>
@@ -95,12 +94,100 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Animasi masuk
             const registerContainer = document.getElementById('register-container');
             registerContainer.classList.remove('opacity-0');
             registerContainer.classList.add('animate-fade-in-up');
+
+            // Tangkap elemen form
+            const registerForm = document.getElementById('register-form');
+
+            registerForm.addEventListener('submit', function (event) {
+                event.preventDefault(); // Mencegah form mengirim data secara default
+
+                // Ambil nilai dari setiap input
+                const fullname = document.getElementById('fullname').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value.trim();
+                const confirmPassword = document.getElementById('confirm-password').value.trim();
+
+                // --- 1. Validasi Input ---
+                if (!fullname || !email || !password || !confirmPassword) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Semua field wajib diisi!',
+                        confirmButtonColor: '#D6336C' // Warna tombol pink
+                    });
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Password dan Konfirmasi Password tidak cocok!',
+                        confirmButtonColor: '#D6336C'
+                    });
+                    return;
+                }
+
+                // --- 2. Cek apakah email sudah terdaftar (Simulasi) ---
+                // Di aplikasi nyata, ini adalah panggilan ke API/backend
+                const users = JSON.parse(localStorage.getItem('pitipaw_users') || '[]');
+                const existingUser = users.find(user => user.email === email);
+
+                if (existingUser) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: 'Alamat email ini sudah terdaftar. Silakan gunakan email lain.',
+                        confirmButtonColor: '#D6336C'
+                    });
+                    return;
+                }
+
+                // --- 3. Proses Pendaftaran (Simulasi) ---
+                Swal.fire({
+                    title: 'Mendaftarkan akun...',
+                    text: 'Mohon tunggu sebentar.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Simulasi delay jaringan (misal: 1.5 detik)
+                setTimeout(() => {
+                    // Buat objek pengguna baru
+                    const newUser = {
+                        fullname: fullname,
+                        email: email,
+                        password: password // Di aplikasi nyata, password harus di-hash!
+                    };
+
+                    // Tambahkan pengguna baru ke daftar
+                    users.push(newUser);
+                    localStorage.setItem('pitipaw_users', JSON.stringify(users));
+
+                    // Tampilkan notifikasi berhasil
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Registrasi Berhasil!',
+                        text: 'Akun Anda telah berhasil dibuat. Anda akan diarahkan ke halaman login.',
+                        confirmButtonColor: '#D6336C',
+                        timer: 3000, // Notifikasi akan hilang setelah 3 detik
+                        timerProgressBar: true
+                    }).then(() => {
+                        // Arahkan ke halaman login setelah notifikasi hilang
+                        window.location.href = 'login.html';
+                    });
+
+                }, 1500);
+
+            });
         });
     </script>
 
 </body>
-
 </html>
