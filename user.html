@@ -156,41 +156,38 @@
         let currentProducts = [];
 
         async function checkAndDisplayBackendStatus() {
-            const statusElement = document.getElementById('backend-status');
             try {
                 const isHealthy = await apiService.checkBackendHealth();
                 if (isHealthy) {
-                    statusElement.innerHTML = '<span class="text-green-600">🟢 Backend Terhubung</span>';
+                    console.log('🟢 Backend Terhubung');
                 } else {
-                    statusElement.innerHTML = '<span class="text-orange-600">🟡 Mode Offline</span>';
+                    console.log('🟡 Mode Offline');
                 }
             } catch (error) {
-                statusElement.innerHTML = '<span class="text-red-600">❌ Backend Error</span>';
+                console.log('❌ Backend Error');
             }
         }
 
         async function loadProducts() {
             const loadingIndicator = document.getElementById('loading-indicator');
             const productGrid = document.getElementById('product-grid');
-            const productCount = document.getElementById('product-count');
 
             loadingIndicator.classList.remove('hidden');
             productGrid.innerHTML = '';
-            productCount.innerHTML = '';
 
             try {
                 currentProducts = await apiService.getProducts();
                 if (currentProducts.length > 0) {
-                    productCount.innerHTML = `📦 ${currentProducts.length} produk`;
+                    console.log(`📦 ${currentProducts.length} produk`);
                 } else {
-                    productCount.innerHTML = '📦 Belum ada produk';
+                    console.log('📦 Belum ada produk');
                 }
                 loadingIndicator.classList.add('hidden');
                 renderProducts(currentProducts);
             } catch (error) {
                 loadingIndicator.classList.add('hidden');
                 productGrid.innerHTML = '<div class="col-span-full text-center text-red-600 p-8 bg-red-50 rounded-lg">❌ Error memuat produk.</div>';
-                productCount.innerHTML = '❌ Error';
+                console.log('❌ Error memuat produk');
             }
         }
 
